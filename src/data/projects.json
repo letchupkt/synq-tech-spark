@@ -1,0 +1,63 @@
+
+[
+  {
+    "id": 1,
+    "title": "AI Interview Assistant",
+    "category": "AI",
+    "description": "AI-powered interview preparation tool to help students practice for job interviews with instant feedback.",
+    "image": "/project-ai.jpg",
+    "demoUrl": "#",
+    "githubUrl": "#",
+    "technologies": ["TensorFlow", "React", "NLP"]
+  },
+  {
+    "id": 2,
+    "title": "Cyber Shield",
+    "category": "Cybersecurity",
+    "description": "Comprehensive cybersecurity tool for small businesses to detect and prevent common security threats.",
+    "image": "/project-cyber.jpg",
+    "demoUrl": "#",
+    "githubUrl": "#",
+    "technologies": ["Python", "Blockchain", "Network Analysis"]
+  },
+  {
+    "id": 3,
+    "title": "DataViz Platform",
+    "category": "Data Science",
+    "description": "Interactive data visualization platform for analyzing and presenting complex datasets with ease.",
+    "image": "/project-data.jpg",
+    "demoUrl": "#",
+    "githubUrl": "#",
+    "technologies": ["D3.js", "Python", "Vue"]
+  },
+  {
+    "id": 4,
+    "title": "Student Portfolio Builder",
+    "category": "Web",
+    "description": "An app that helps students create professional portfolios to showcase their projects and skills.",
+    "image": "/project-web.jpg",
+    "demoUrl": "#",
+    "githubUrl": "#",
+    "technologies": ["React", "Tailwind CSS", "Firebase"]
+  },
+  {
+    "id": 5,
+    "title": "TechLearn Hub",
+    "category": "Education",
+    "description": "A comprehensive learning platform focused on helping students acquire in-demand tech skills.",
+    "image": "/project-learn.jpg",
+    "demoUrl": "#",
+    "githubUrl": "#",
+    "technologies": ["NextJS", "MongoDB", "Express"]
+  },
+  {
+    "id": 6,
+    "title": "SmartCampus App",
+    "category": "App",
+    "description": "Mobile application for enhancing student experience on campus with smart navigation and event notifications.",
+    "image": "/project-app.jpg",
+    "demoUrl": "#",
+    "githubUrl": "#",
+    "technologies": ["React Native", "Node.js", "AWS"]
+  }
+]

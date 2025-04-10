@@ -1,0 +1,46 @@
+
+[
+  {
+    "id": 1,
+    "name": "Lakshmikanthan",
+    "role": "Founder & CEO",
+    "bio": "BTech student in AI & DS from SRCE, passionate about bridging technology gaps and empowering fellow students through innovation.",
+    "photo": "/founder.jpg",
+    "social": {
+      "linkedin": "https://linkedin.com/in/yourprofile",
+      "github": "https://github.com/yourusername",
+      "instagram": "https://instagram.com/yourusername"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Team Member 1",
+    "role": "AI Research Lead",
+    "bio": "Specializes in natural language processing and computer vision applications. Leading our AI research initiatives.",
+    "photo": "/team1.jpg",
+    "social": {
+      "linkedin": "https://linkedin.com/in/member1"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Team Member 2",
+    "role": "Cybersecurity Specialist",
+    "bio": "Expert in network security and penetration testing. Ensures all SYNQ products meet the highest security standards.",
+    "photo": "/team2.jpg",
+    "social": {
+      "linkedin": "https://linkedin.com/in/member2",
+      "github": "https://github.com/member2"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Team Member 3",
+    "role": "Data Science Engineer",
+    "bio": "Passionate about transforming data into actionable insights. Develops scalable data pipelines and visualization tools.",
+    "photo": "/team3.jpg",
+    "social": {
+      "linkedin": "https://linkedin.com/in/member3"
+    }
+  }
+]
