@@ -1,241 +1,272 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, Send, ThumbsUp, Calendar } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Loader2, Heart, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  getApprovedComments, 
+  addComment, 
+  incrementLikes,
+  Comment as CommentType
+} from '@/services/commentService';
 
-// Comment interface for type safety
-interface Comment {
-  id: string;
-  name: string;
-  email: string;
-  comment: string;
-  date: string;
-  likes: number;
-  status?: 'approved' | 'pending' | 'rejected';
-}
+const commentSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(50),
+  email: z.string().email('Please enter a valid email'),
+  comment: z.string().min(10, 'Comment must be at least 10 characters').max(500)
+});
+
+type CommentFormValues = z.infer<typeof commentSchema>;
 
 const CommentSection = () => {
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [comments, setComments] = useState<CommentType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  // Load comments from localStorage on component mount
-  useEffect(() => {
-    const savedComments = localStorage.getItem('synqComments');
-    if (savedComments) {
-      // Filter to only show approved comments
-      const allComments = JSON.parse(savedComments);
-      const approvedComments = allComments.filter((comment: Comment) => 
-        !comment.status || comment.status === 'approved'
-      );
-      setComments(approvedComments);
-    } else {
-      // Sample comments for initial display
-      const initialComments: Comment[] = [
-        {
-          id: '1',
-          name: 'Alex Johnson',
-          email: 'alex@example.com',
-          comment: 'SYNQ helped us implement an AI chatbot that increased our customer engagement by 45%. Their team was professional and delivered ahead of schedule!',
-          date: '2025-03-15',
-          likes: 12,
-          status: 'approved'
-        },
-        {
-          id: '2',
-          name: 'Sarah Williams',
-          email: 'sarah@example.com',
-          comment: 'The cybersecurity audit performed by SYNQ identified critical vulnerabilities that could have cost us millions. Highly recommended for startups concerned about security.',
-          date: '2025-03-28',
-          likes: 8,
-          status: 'approved'
-        }
-      ];
-      setComments(initialComments);
-      localStorage.setItem('synqComments', JSON.stringify(initialComments));
+  const form = useForm<CommentFormValues>({
+    resolver: zodResolver(commentSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      comment: ''
     }
-  }, []);
+  });
+
+  // Load comments on component mount
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedComments = await getApprovedComments();
+        setComments(fetchedComments);
+        
+        // Load liked comments from localStorage
+        const storedLikes = localStorage.getItem('likedComments');
+        if (storedLikes) {
+          setLikedComments(new Set(JSON.parse(storedLikes)));
+        }
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load comments. Please try again later.',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchComments();
+  }, [toast]);
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name.trim() || !email.trim() || !newComment.trim()) {
+  const onSubmit = async (data: CommentFormValues) => {
+    try {
+      setIsSubmitting(true);
+      
+      const newComment: Omit<CommentType, 'id'> = {
+        ...data,
+        date: new Date().toLocaleDateString(),
+        likes: 0,
+        status: 'pending' // New comments are pending by default
+      };
+      
+      await addComment(newComment);
+      
+      form.reset();
+      
       toast({
-        title: "Missing information",
-        description: "Please fill in all fields to submit a comment.",
-        variant: "destructive"
+        title: 'Comment Submitted',
+        description: 'Your comment has been submitted for review.',
       });
+    } catch (error) {
+      console.error('Error submitting comment:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to submit your comment. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle like button click
+  const handleLike = async (commentId: string) => {
+    // Check if already liked
+    if (likedComments.has(commentId)) {
       return;
     }
     
-    // Create new comment
-    const newCommentObj: Comment = {
-      id: Date.now().toString(),
-      name,
-      email,
-      comment: newComment,
-      date: new Date().toISOString().split('T')[0],
-      likes: 0,
-      status: 'pending' // New comments start as pending
-    };
-    
-    // Update localStorage with all comments (including the new one)
-    const savedComments = localStorage.getItem('synqComments');
-    let allComments: Comment[] = [];
-    
-    if (savedComments) {
-      allComments = JSON.parse(savedComments);
-    }
-    
-    const updatedComments = [...allComments, newCommentObj];
-    localStorage.setItem('synqComments', JSON.stringify(updatedComments));
-    
-    // Reset form
-    setNewComment('');
-    setName('');
-    setEmail('');
-    
-    toast({
-      title: "Comment submitted",
-      description: "Thank you for your feedback! Your comment will be visible after approval.",
-    });
-  };
-
-  // Handle like action
-  const handleLike = (id: string) => {
-    const savedComments = localStorage.getItem('synqComments');
-    if (savedComments) {
-      const allComments: Comment[] = JSON.parse(savedComments);
-      
-      // Update the liked comment
-      const updatedAllComments = allComments.map(comment => 
-        comment.id === id ? { ...comment, likes: comment.likes + 1 } : comment
+    try {
+      // Update UI immediately
+      const updatedComments = comments.map(c => 
+        c.id === commentId ? { ...c, likes: c.likes + 1 } : c
       );
+      setComments(updatedComments);
       
-      // Save back to localStorage
-      localStorage.setItem('synqComments', JSON.stringify(updatedAllComments));
+      // Add to liked set
+      const newLikedComments = new Set(likedComments);
+      newLikedComments.add(commentId);
+      setLikedComments(newLikedComments);
+      localStorage.setItem('likedComments', JSON.stringify([...newLikedComments]));
       
-      // Update visible comments
-      const visibleComments = updatedAllComments.filter(
-        comment => !comment.status || comment.status === 'approved'
-      );
-      setComments(visibleComments);
+      // Update in Firebase
+      await incrementLikes(commentId);
+    } catch (error) {
+      console.error('Error liking comment:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to like the comment. Please try again.',
+        variant: 'destructive'
+      });
     }
   };
 
   return (
-    <section id="testimonials" className="section-padding bg-gradient-to-b from-background to-secondary/20">
+    <section id="comments" className="section-padding bg-gradient-to-b from-background to-secondary/10">
       <div className="container mx-auto">
-        <h2 className="section-title text-center mb-12">Client Testimonials</h2>
-        
-        <div className="grid lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-7 order-2 lg:order-1">
-            <Card className="bg-card/80 backdrop-blur border-primary/20 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-primary" />
-                  Client Reviews
-                </CardTitle>
-              </CardHeader>
-              <ScrollArea className="h-[450px] pr-4">
-                <CardContent className="space-y-4">
-                  {comments.length > 0 ? (
-                    comments.map((comment) => (
-                      <Card key={comment.id} className="bg-muted/40 mb-4 card-hover">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h4 className="font-semibold">{comment.name}</h4>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Calendar className="h-3 w-3" /> {comment.date}
-                              </div>
-                            </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="flex items-center gap-1 text-xs"
-                              onClick={() => handleLike(comment.id)}
-                            >
-                              <ThumbsUp className="h-3 w-3" /> {comment.likes}
-                            </Button>
-                          </div>
-                          <p className="text-sm mt-2">{comment.comment}</p>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>No comments yet. Be the first to share your experience!</p>
-                    </div>
-                  )}
+        <div className="text-center mb-12">
+          <h2 className="section-title">Client Testimonials</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Hear what our clients have to say about their experiences working with SYNQ.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-8 lg:flex-row">
+          {/* Comments Display */}
+          <div className="w-full lg:w-2/3">
+            <h3 className="text-xl font-semibold mb-6">What People Are Saying</h3>
+            
+            {isLoading ? (
+              <div className="flex justify-center items-center h-60">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading comments...</span>
+              </div>
+            ) : comments.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-center text-muted-foreground">
+                    No comments yet. Be the first to leave a comment!
+                  </p>
                 </CardContent>
-              </ScrollArea>
-            </Card>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {comments.map((comment) => (
+                  <Card key={comment.id} className="overflow-hidden">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-semibold">{comment.name}</h4>
+                          <p className="text-sm text-muted-foreground">{comment.date}</p>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="flex items-center gap-1"
+                          onClick={() => handleLike(comment.id)}
+                          disabled={likedComments.has(comment.id)}
+                        >
+                          <Heart 
+                            className={`h-4 w-4 ${likedComments.has(comment.id) ? 'fill-primary text-primary' : ''}`} 
+                          />
+                          <span>{comment.likes}</span>
+                        </Button>
+                      </div>
+                      <p className="mt-3">{comment.comment}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
           
-          <div className="lg:col-span-5 order-1 lg:order-2">
-            <Card className="bg-card/80 backdrop-blur border-primary/20 shadow-lg">
+          {/* Comment Form */}
+          <div className="w-full lg:w-1/3">
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Send className="h-5 w-5 text-primary" />
-                  Share Your Experience
-                </CardTitle>
+                <CardTitle>Leave a Comment</CardTitle>
+                <CardDescription>
+                  Share your experience or ask a question.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium mb-1">Name</label>
-                      <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
-                        className="bg-background/50"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Your email"
-                        className="bg-background/50"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="comment" className="block text-sm font-medium mb-1">Your Experience</label>
-                    <Textarea
-                      id="comment"
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Share your experience with SYNQ..."
-                      className="bg-background/50 min-h-[120px]"
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
-                  
-                  <Button type="submit" className="w-full button-primary">
-                    Submit Feedback
-                    <Send className="ml-2 h-4 w-4" />
-                  </Button>
-                </form>
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="your.email@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="comment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Comment</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Share your thoughts..." 
+                              className="min-h-[120px]" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          Submit Comment
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
-              <CardFooter className="text-xs text-muted-foreground text-center">
-                Your feedback helps us improve and helps others learn about our services.
-              </CardFooter>
             </Card>
           </div>
         </div>

@@ -17,27 +17,22 @@ import {
   DialogDescription, 
   DialogFooter, 
   DialogHeader, 
-  DialogTitle,
-  DialogTrigger 
+  DialogTitle 
 } from '@/components/ui/dialog';
-import { Pencil, Plus, Trash, Github, Linkedin, Instagram } from 'lucide-react';
+import { Pencil, Plus, Trash, Github, Linkedin, Instagram, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface TeamMember {
-  id: number;
-  name: string;
-  role: string;
-  bio: string;
-  photo: string;
-  social: {
-    linkedin?: string;
-    github?: string;
-    instagram?: string;
-  };
-}
+import { 
+  TeamMember, 
+  getTeamMembers, 
+  addTeamMember, 
+  updateTeamMember, 
+  deleteTeamMember 
+} from '@/services/teamService';
 
 const TeamManagement = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentMember, setCurrentMember] = useState<TeamMember | null>(null);
@@ -54,26 +49,27 @@ const TeamManagement = () => {
   });
   const { toast } = useToast();
 
-  // Load team members from localStorage on component mount
+  // Load team members from Firestore
   useEffect(() => {
-    const storedTeam = localStorage.getItem('teamMembers');
-    if (storedTeam) {
-      setTeamMembers(JSON.parse(storedTeam));
-    } else {
-      // Load from the default data file if not in localStorage
-      import('@/data/team.json').then((data) => {
-        setTeamMembers(data.default);
-        localStorage.setItem('teamMembers', JSON.stringify(data.default));
-      });
-    }
-  }, []);
+    const fetchTeamMembers = async () => {
+      try {
+        setIsLoading(true);
+        const members = await getTeamMembers();
+        setTeamMembers(members);
+      } catch (error) {
+        console.error('Error fetching team members:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load team members",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Update localStorage when team members change
-  useEffect(() => {
-    if (teamMembers.length > 0) {
-      localStorage.setItem('teamMembers', JSON.stringify(teamMembers));
-    }
-  }, [teamMembers]);
+    fetchTeamMembers();
+  }, [toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -109,7 +105,7 @@ const TeamManagement = () => {
     });
   };
 
-  const handleAddMember = () => {
+  const handleAddMember = async () => {
     // Validate form data
     if (!formData.name || !formData.role || !formData.bio) {
       toast({
@@ -120,30 +116,44 @@ const TeamManagement = () => {
       return;
     }
 
-    const newMember: TeamMember = {
-      id: Date.now(), // Use timestamp as a simple id
-      name: formData.name || '',
-      role: formData.role || '',
-      bio: formData.bio || '',
-      photo: formData.photo || '/placeholder.svg',
-      social: {
-        linkedin: formData.social?.linkedin || '',
-        github: formData.social?.github || '',
-        instagram: formData.social?.instagram || '',
-      }
-    };
+    try {
+      setIsSubmitting(true);
+      
+      const newMember = {
+        name: formData.name || '',
+        role: formData.role || '',
+        bio: formData.bio || '',
+        photo: formData.photo || '/placeholder.svg',
+        social: {
+          linkedin: formData.social?.linkedin || '',
+          github: formData.social?.github || '',
+          instagram: formData.social?.instagram || '',
+        }
+      };
 
-    setTeamMembers([...teamMembers, newMember]);
-    resetForm();
-    setIsEditDialogOpen(false);
-    
-    toast({
-      title: "Team member added",
-      description: `${newMember.name} has been added to the team`
-    });
+      const newMemberId = await addTeamMember(newMember);
+      
+      setTeamMembers([...teamMembers, { ...newMember, id: newMemberId }]);
+      resetForm();
+      setIsEditDialogOpen(false);
+      
+      toast({
+        title: "Team member added",
+        description: `${newMember.name} has been added to the team`
+      });
+    } catch (error) {
+      console.error('Error adding team member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add team member",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleEditMember = () => {
+  const handleEditMember = async () => {
     if (!currentMember) return;
     
     // Validate form data
@@ -156,30 +166,46 @@ const TeamManagement = () => {
       return;
     }
 
-    const updatedMembers = teamMembers.map(member => 
-      member.id === currentMember.id 
-        ? { 
-            ...member, 
-            name: formData.name || member.name,
-            role: formData.role || member.role,
-            bio: formData.bio || member.bio,
-            photo: formData.photo || member.photo,
-            social: {
-              linkedin: formData.social?.linkedin || member.social.linkedin || '',
-              github: formData.social?.github || member.social.github || '',
-              instagram: formData.social?.instagram || member.social.instagram || '',
-            }
-          } 
-        : member
-    );
+    try {
+      setIsSubmitting(true);
+      
+      const updatedMember = {
+        name: formData.name,
+        role: formData.role,
+        bio: formData.bio,
+        photo: formData.photo,
+        social: {
+          linkedin: formData.social?.linkedin || '',
+          github: formData.social?.github || '',
+          instagram: formData.social?.instagram || '',
+        }
+      };
 
-    setTeamMembers(updatedMembers);
-    setIsEditDialogOpen(false);
-    
-    toast({
-      title: "Team member updated",
-      description: `${formData.name}'s information has been updated`
-    });
+      await updateTeamMember(currentMember.id, updatedMember);
+      
+      const updatedMembers = teamMembers.map(member => 
+        member.id === currentMember.id 
+          ? { ...member, ...updatedMember }
+          : member
+      );
+      
+      setTeamMembers(updatedMembers);
+      setIsEditDialogOpen(false);
+      
+      toast({
+        title: "Team member updated",
+        description: `${formData.name}'s information has been updated`
+      });
+    } catch (error) {
+      console.error('Error updating team member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update team member",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEditClick = (member: TeamMember) => {
@@ -190,9 +216,9 @@ const TeamManagement = () => {
       bio: member.bio,
       photo: member.photo,
       social: {
-        linkedin: member.social.linkedin || '',
-        github: member.social.github || '',
-        instagram: member.social.instagram || '',
+        linkedin: member.social?.linkedin || '',
+        github: member.social?.github || '',
+        instagram: member.social?.instagram || '',
       }
     });
     setIsEditDialogOpen(true);
@@ -203,17 +229,31 @@ const TeamManagement = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDeleteMember = () => {
+  const handleDeleteMember = async () => {
     if (!currentMember) return;
     
-    const filteredMembers = teamMembers.filter(member => member.id !== currentMember.id);
-    setTeamMembers(filteredMembers);
-    setIsDeleteDialogOpen(false);
-    
-    toast({
-      title: "Team member removed",
-      description: `${currentMember.name} has been removed from the team`
-    });
+    try {
+      setIsSubmitting(true);
+      await deleteTeamMember(currentMember.id);
+      
+      const filteredMembers = teamMembers.filter(member => member.id !== currentMember.id);
+      setTeamMembers(filteredMembers);
+      setIsDeleteDialogOpen(false);
+      
+      toast({
+        title: "Team member removed",
+        description: `${currentMember.name} has been removed from the team`
+      });
+    } catch (error) {
+      console.error('Error deleting team member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to remove team member",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAddClick = () => {
@@ -221,6 +261,15 @@ const TeamManagement = () => {
     setCurrentMember(null);
     setIsEditDialogOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading team members...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -254,9 +303,9 @@ const TeamManagement = () => {
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       <div className="flex space-x-2">
-                        {member.social.linkedin && <Linkedin size={16} />}
-                        {member.social.github && <Github size={16} />}
-                        {member.social.instagram && <Instagram size={16} />}
+                        {member.social?.linkedin && <Linkedin size={16} />}
+                        {member.social?.github && <Github size={16} />}
+                        {member.social?.instagram && <Instagram size={16} />}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -376,9 +425,19 @@ const TeamManagement = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-            <Button onClick={currentMember ? handleEditMember : handleAddMember}>
-              {currentMember ? 'Save Changes' : 'Add Member'}
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button 
+              onClick={currentMember ? handleEditMember : handleAddMember} 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {currentMember ? 'Saving...' : 'Adding...'}
+                </>
+              ) : (
+                currentMember ? 'Save Changes' : 'Add Member'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -394,8 +453,19 @@ const TeamManagement = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteMember}>Delete</Button>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteMember}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : 'Delete'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
