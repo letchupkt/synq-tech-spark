@@ -11,7 +11,7 @@ const HeroSection = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="flex flex-col space-y-6 animate-fade-in">
             <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium w-fit">
-              <span className="mr-1">✨</span> Innovate. Create. Empower.
+              <span className="mr-1">✨</span> The Tech Empire That Does It All.
             </div>
             
             <h1 className="headline">
