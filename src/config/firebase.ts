@@ -5,12 +5,13 @@ import { getFirestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDZQbwC0xGmCtE8vodxEFg07yJdQvpncMo",
-  authDomain: "synq-tech-empire.firebaseapp.com",
-  projectId: "synq-tech-empire",
-  storageBucket: "synq-tech-empire.appspot.com",
-  messagingSenderId: "635279332133",
-  appId: "1:635279332133:web:b6bfc0cceb39e9b6df5e69"
+  apiKey: "AIzaSyAWO-OJkiMT_MeDuOKK0zsUKaCAFKyw7tM",
+  authDomain: "synq-corp.firebaseapp.com",
+  projectId: "synq-corp",
+  storageBucket: "synq-corp.firebasestorage.app",
+  messagingSenderId: "656567212862",
+  appId: "1:656567212862:web:d07ef26c7d81acfe7d2a6f",
+  measurementId: "G-XMVY6212HC"
 };
 
 // Initialize Firebase
