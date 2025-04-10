@@ -16,6 +16,7 @@ interface Comment {
   comment: string;
   date: string;
   likes: number;
+  status?: 'approved' | 'pending' | 'rejected';
 }
 
 const CommentSection = () => {
@@ -29,7 +30,12 @@ const CommentSection = () => {
   useEffect(() => {
     const savedComments = localStorage.getItem('synqComments');
     if (savedComments) {
-      setComments(JSON.parse(savedComments));
+      // Filter to only show approved comments
+      const allComments = JSON.parse(savedComments);
+      const approvedComments = allComments.filter((comment: Comment) => 
+        !comment.status || comment.status === 'approved'
+      );
+      setComments(approvedComments);
     } else {
       // Sample comments for initial display
       const initialComments: Comment[] = [
@@ -39,7 +45,8 @@ const CommentSection = () => {
           email: 'alex@example.com',
           comment: 'SYNQ helped us implement an AI chatbot that increased our customer engagement by 45%. Their team was professional and delivered ahead of schedule!',
           date: '2025-03-15',
-          likes: 12
+          likes: 12,
+          status: 'approved'
         },
         {
           id: '2',
@@ -47,18 +54,14 @@ const CommentSection = () => {
           email: 'sarah@example.com',
           comment: 'The cybersecurity audit performed by SYNQ identified critical vulnerabilities that could have cost us millions. Highly recommended for startups concerned about security.',
           date: '2025-03-28',
-          likes: 8
+          likes: 8,
+          status: 'approved'
         }
       ];
       setComments(initialComments);
       localStorage.setItem('synqComments', JSON.stringify(initialComments));
     }
   }, []);
-
-  // Save comments to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('synqComments', JSON.stringify(comments));
-  }, [comments]);
 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
@@ -80,11 +83,20 @@ const CommentSection = () => {
       email,
       comment: newComment,
       date: new Date().toISOString().split('T')[0],
-      likes: 0
+      likes: 0,
+      status: 'pending' // New comments start as pending
     };
     
-    // Add to comments array
-    setComments([...comments, newCommentObj]);
+    // Update localStorage with all comments (including the new one)
+    const savedComments = localStorage.getItem('synqComments');
+    let allComments: Comment[] = [];
+    
+    if (savedComments) {
+      allComments = JSON.parse(savedComments);
+    }
+    
+    const updatedComments = [...allComments, newCommentObj];
+    localStorage.setItem('synqComments', JSON.stringify(updatedComments));
     
     // Reset form
     setNewComment('');
@@ -93,17 +105,30 @@ const CommentSection = () => {
     
     toast({
       title: "Comment submitted",
-      description: "Thank you for your feedback!",
+      description: "Thank you for your feedback! Your comment will be visible after approval.",
     });
   };
 
   // Handle like action
   const handleLike = (id: string) => {
-    setComments(
-      comments.map(comment => 
+    const savedComments = localStorage.getItem('synqComments');
+    if (savedComments) {
+      const allComments: Comment[] = JSON.parse(savedComments);
+      
+      // Update the liked comment
+      const updatedAllComments = allComments.map(comment => 
         comment.id === id ? { ...comment, likes: comment.likes + 1 } : comment
-      )
-    );
+      );
+      
+      // Save back to localStorage
+      localStorage.setItem('synqComments', JSON.stringify(updatedAllComments));
+      
+      // Update visible comments
+      const visibleComments = updatedAllComments.filter(
+        comment => !comment.status || comment.status === 'approved'
+      );
+      setComments(visibleComments);
+    }
   };
 
   return (
