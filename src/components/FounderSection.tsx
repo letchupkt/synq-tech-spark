@@ -10,7 +10,7 @@ const FounderSection = () => {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="relative">
             <div className="relative w-full max-w-md aspect-square rounded-lg overflow-hidden mx-auto border-4 border-primary/20">
-              <img src="src/data/images/team/founder.png" alt="Lakshmikanthan K" className="absolute inset-0 w-full h-full object-cover"/>
+              <img src="public/letchu.jpg" alt="Lakshmikanthan K" className="absolute inset-0 w-full h-full object-cover"/>
               
             </div>
           </div>
