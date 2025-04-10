@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { Mail, MapPin, Phone, Send } from 'lucide-react';
 
+
 const ContactSection = () => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -18,24 +19,41 @@ const ContactSection = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // In a real app, this would send the data to a backend service
-    console.log('Form submitted:', formData);
-    
-    toast({
-      title: "Message Sent!",
-      description: "We've received your message and will get back to you soon.",
+
+    const form = new FormData();
+    form.append("access_key", "5bd52383-1b22-419a-87c4-8f2a7e5d356d"); // Replace with your real access key
+    form.append("name", formData.name);
+    form.append("email", formData.email);
+    form.append("subject", formData.subject);
+    form.append("message", formData.message);
+
+    const res = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      body: form
     });
-    
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      subject: '',
-      message: '',
-    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      toast({
+        title: "Message Sent!",
+        description: "We've received your message and will get back to you soon.",
+      });
+
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: '',
+      });
+    } else {
+      toast({
+        title: "Submission Failed",
+        description: "Please try again later.",
+      });
+    }
   };
 
   return (
@@ -59,7 +77,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h4 className="font-medium">Location</h4>
-                  <p className="text-muted-foreground">SRCE, Chennai, Tamil Nadu, India</p>
+                  <p className="text-muted-foreground">Trichy, Tamil Nadu, India</p>
                 </div>
               </div>
               
@@ -69,7 +87,7 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <h4 className="font-medium">Email</h4>
-                  <p className="text-muted-foreground">contact@synqtech.com</p>
+                  <p className="text-muted-foreground">synqthefuture@gmail.com</p>
                 </div>
               </div>
               

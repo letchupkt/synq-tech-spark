@@ -10,17 +10,13 @@ const FounderSection = () => {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="relative">
             <div className="relative w-full max-w-md aspect-square rounded-lg overflow-hidden mx-auto border-4 border-primary/20">
-              {/* Replace with actual image once available */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30">
-                <div className="flex items-center justify-center h-full text-center text-muted">
-                  <p>Founder Image</p>
-                </div>
-              </div>
+              <img src="/src/data/images/team/founder.png" alt="Lakshmikanthan K" className="absolute inset-0 w-full h-full object-cover"/>
+              
             </div>
           </div>
           
           <div>
-            <h3 className="text-3xl font-bold font-poppins mb-2">Lakshmikanthan</h3>
+            <h3 className="text-3xl font-bold font-poppins mb-2">Lakshmikanthan K</h3>
             <p className="text-primary font-medium mb-6">Founder & CEO</p>
             
             <p className="text-lg text-muted-foreground mb-4">
@@ -37,7 +33,7 @@ const FounderSection = () => {
             
             <div className="flex space-x-4">
               <a 
-                href="https://linkedin.com/in/yourprofile" 
+                href="https://linkedin.com/in/lakshmikanthank" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-3 rounded-full bg-secondary hover:bg-primary transition-colors duration-300"
@@ -45,7 +41,7 @@ const FounderSection = () => {
                 <Linkedin size={20} />
               </a>
               <a 
-                href="https://github.com/yourusername" 
+                href="https://github.com/letchupkt" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-3 rounded-full bg-secondary hover:bg-primary transition-colors duration-300"
@@ -53,7 +49,7 @@ const FounderSection = () => {
                 <Github size={20} />
               </a>
               <a 
-                href="https://instagram.com/yourusername" 
+                href="https://instagram.com/letchu_pkt" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="p-3 rounded-full bg-secondary hover:bg-primary transition-colors duration-300"

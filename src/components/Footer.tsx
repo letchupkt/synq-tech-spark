@@ -16,7 +16,7 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-2xl font-bold text-primary">SYNQ</h3>
             <p className="text-muted-foreground">
-              Empowering students through technology and innovation.
+              The Tech Empire That Does It All.
             </p>
           </div>
 
@@ -44,9 +44,9 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Connect</h4>
             <ul className="space-y-2">
-              <li><a href="mailto:contact@synqtech.com" className="text-muted-foreground hover:text-primary transition-colors">contact@synqtech.com</a></li>
-              <li><a href="tel:+919876543210" className="text-muted-foreground hover:text-primary transition-colors">+91 9876543210</a></li>
-              <li><span className="text-muted-foreground">SRCE, Chennai, Tamil Nadu</span></li>
+              <li><a href="mailto:contact@synqtech.com" className="text-muted-foreground hover:text-primary transition-colors">synqthefuture@gmail.com</a></li>
+              <li><a href="tel:+919876543210" className="text-muted-foreground hover:text-primary transition-colors">+91 999999999</a></li>
+              <li><span className="text-muted-foreground">Trichy, Tamil Nadu</span></li>
             </ul>
           </div>
         </div>

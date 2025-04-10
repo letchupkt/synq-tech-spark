@@ -2,14 +2,15 @@
 [
   {
     "id": 1,
-    "title": "AI Interview Assistant",
-    "category": "AI",
-    "description": "AI-powered interview preparation tool to help students practice for job interviews with instant feedback.",
-    "image": "/project-ai.jpg",
-    "demoUrl": "#",
-    "githubUrl": "#",
-    "technologies": ["TensorFlow", "React", "NLP"]
+    "title": "SRCE College Website  ",
+    "category": "Web",
+    "description": "An app that helps students create professional portfolios to showcase their projects and skills.",
+    "image": "images/projects/srce.png",
+    "demoUrl": "srcebyletchu.netlify.app",
+    "githubUrl": "https://github.com/letchupkt/SRCE-college-web",
+    "technologies": ["HTML", "CSS", "JavaScript"]
   },
+  
   {
     "id": 2,
     "title": "Cyber Shield",
@@ -32,13 +33,13 @@
   },
   {
     "id": 4,
-    "title": "Student Portfolio Builder",
-    "category": "Web",
-    "description": "An app that helps students create professional portfolios to showcase their projects and skills.",
-    "image": "/project-web.jpg",
+    "title": "AI Interview Assistant",
+    "category": "AI",
+    "description": "AI-powered interview preparation tool to help students practice for job interviews with instant feedback.",
+    "image": "/project-ai.jpg",
     "demoUrl": "#",
     "githubUrl": "#",
-    "technologies": ["React", "Tailwind CSS", "Firebase"]
+    "technologies": ["TensorFlow", "React", "NLP"]
   },
   {
     "id": 5,
