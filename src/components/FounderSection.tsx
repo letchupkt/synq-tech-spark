@@ -10,7 +10,7 @@ const FounderSection = () => {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="relative">
             <div className="relative w-full max-w-md aspect-square rounded-lg overflow-hidden mx-auto border-4 border-primary/20">
-              <img src="https://raw.githubusercontent.com/letchupkt/synq-tech-spark/1bb3f43f97dbcab562a4f52d039e66100d3bf45d/public/letchu.png" alt="Lakshmikanthan K" class="absolute inset-0 w-full h-full object-cover"/>
+              <img src="https://raw.githubusercontent.com/letchupkt/synq-tech-spark/refs/heads/main/public/letchu.jpg" alt="Lakshmikanthan K" class="absolute inset-0 w-full h-full object-cover"/>
               
             </div>
           </div>
