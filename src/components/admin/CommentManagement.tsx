@@ -19,50 +19,45 @@ import {
   DialogTitle 
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash, ThumbsUp, Calendar, Check, X } from 'lucide-react';
+import { Pencil, Trash, ThumbsUp, Calendar, Check, X, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface Comment {
-  id: string;
-  name: string;
-  email: string;
-  comment: string;
-  date: string;
-  likes: number;
-  status?: 'approved' | 'pending' | 'rejected';
-}
+import { 
+  getComments, 
+  updateComment, 
+  deleteComment,
+  Comment
+} from '@/services/commentService';
 
 const CommentManagement = () => {
   const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentComment, setCurrentComment] = useState<Comment | null>(null);
   const { toast } = useToast();
 
-  // Load comments from localStorage on component mount
+  // Load comments from Supabase
   useEffect(() => {
-    const storedComments = localStorage.getItem('synqComments');
-    if (storedComments) {
-      // Add status field if not present
-      const parsedComments = JSON.parse(storedComments).map((comment: Comment) => ({
-        ...comment,
-        status: comment.status || 'approved' // Default to approved for existing comments
-      }));
-      setComments(parsedComments);
-      // Store back with the status field
-      localStorage.setItem('synqComments', JSON.stringify(parsedComments));
-    } else {
-      // If no comments found, set empty array
-      setComments([]);
-    }
-  }, []);
+    const fetchComments = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedComments = await getComments();
+        setComments(fetchedComments);
+      } catch (error) {
+        console.error('Error fetching comments:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load comments. Please try again later.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Update localStorage when comments change
-  useEffect(() => {
-    if (comments.length > 0) {
-      localStorage.setItem('synqComments', JSON.stringify(comments));
-    }
-  }, [comments]);
+    fetchComments();
+  }, [toast]);
 
   const handleViewClick = (comment: Comment) => {
     setCurrentComment(comment);
@@ -74,51 +69,97 @@ const CommentManagement = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDeleteComment = () => {
+  const handleDeleteComment = async () => {
     if (!currentComment) return;
     
-    const filteredComments = comments.filter(comment => comment.id !== currentComment.id);
-    setComments(filteredComments);
-    setIsDeleteDialogOpen(false);
-    
-    toast({
-      title: "Comment deleted",
-      description: `The comment from ${currentComment.name} has been deleted`
-    });
+    try {
+      setIsSubmitting(true);
+      await deleteComment(currentComment.id);
+      
+      const filteredComments = comments.filter(comment => comment.id !== currentComment.id);
+      setComments(filteredComments);
+      setIsDeleteDialogOpen(false);
+      
+      toast({
+        title: "Comment deleted",
+        description: `The comment from ${currentComment.name} has been deleted`
+      });
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete comment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleStatusChange = (commentId: string, status: 'approved' | 'pending' | 'rejected') => {
-    const updatedComments = comments.map(comment =>
-      comment.id === commentId
-        ? { ...comment, status }
-        : comment
-    );
-    
-    setComments(updatedComments);
-    
-    toast({
-      title: `Comment ${status}`,
-      description: `The comment has been marked as ${status}`
-    });
+  const handleStatusChange = async (commentId: string, status: boolean) => {
+    try {
+      setIsSubmitting(true);
+      await updateComment(commentId, { is_approved: status });
+      
+      const updatedComments = comments.map(comment =>
+        comment.id === commentId
+          ? { ...comment, is_approved: status }
+          : comment
+      );
+      
+      setComments(updatedComments);
+      
+      toast({
+        title: `Comment ${status ? 'approved' : 'rejected'}`,
+        description: `The comment has been marked as ${status ? 'approved' : 'rejected'}`
+      });
+    } catch (error) {
+      console.error('Error updating comment status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update comment status. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const getStatusBadge = (status?: string) => {
-    switch (status) {
-      case 'approved':
-        return <Badge className="bg-green-500">Approved</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-500">Pending</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-500">Rejected</Badge>;
-      default:
-        return <Badge className="bg-green-500">Approved</Badge>;
+  const getStatusBadge = (isApproved?: boolean) => {
+    if (isApproved === true) {
+      return <Badge className="bg-green-500">Approved</Badge>;
+    } else if (isApproved === false) {
+      return <Badge className="bg-red-500">Rejected</Badge>;
+    } else {
+      return <Badge className="bg-yellow-500">Pending</Badge>;
     }
   };
 
   // Get filtered comments that should show on the website
   const getPublicComments = () => {
-    return comments.filter(comment => comment.status === 'approved');
+    return comments.filter(comment => comment.is_approved === true);
   };
+
+  // Format date
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Unknown date';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString();
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading comments...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -145,11 +186,11 @@ const CommentManagement = () => {
                 comments.map((comment) => (
                   <TableRow key={comment.id}>
                     <TableCell className="font-medium">{comment.name}</TableCell>
-                    <TableCell>{comment.date}</TableCell>
+                    <TableCell>{formatDate(comment.created_at)}</TableCell>
                     <TableCell className="hidden md:table-cell truncate max-w-sm">
                       {comment.comment.length > 60 ? `${comment.comment.substring(0, 60)}...` : comment.comment}
                     </TableCell>
-                    <TableCell>{getStatusBadge(comment.status)}</TableCell>
+                    <TableCell>{getStatusBadge(comment.is_approved)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button 
@@ -200,13 +241,13 @@ const CommentManagement = () => {
                   <h4 className="font-semibold">{currentComment.name}</h4>
                   <p className="text-sm text-muted-foreground">{currentComment.email}</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                    <Calendar className="h-3 w-3" /> {currentComment.date}
+                    <Calendar className="h-3 w-3" /> {formatDate(currentComment.created_at)}
                     <span className="flex items-center">
                       <ThumbsUp className="h-3 w-3 mr-1" /> {currentComment.likes}
                     </span>
                   </div>
                 </div>
-                {getStatusBadge(currentComment.status)}
+                {getStatusBadge(currentComment.is_approved)}
               </div>
               
               <div className="mt-4 p-4 bg-muted rounded-md">
@@ -217,26 +258,20 @@ const CommentManagement = () => {
                 <h4 className="text-sm font-semibold">Set Comment Status:</h4>
                 <div className="flex gap-2">
                   <Button 
-                    variant={currentComment.status === 'approved' ? 'default' : 'outline'} 
+                    variant={currentComment.is_approved === true ? 'default' : 'outline'} 
                     size="sm"
                     className="flex items-center gap-1"
-                    onClick={() => handleStatusChange(currentComment.id, 'approved')}
+                    onClick={() => handleStatusChange(currentComment.id, true)}
+                    disabled={isSubmitting}
                   >
                     <Check className="h-4 w-4" /> Approve
                   </Button>
                   <Button 
-                    variant={currentComment.status === 'pending' ? 'default' : 'outline'} 
+                    variant={currentComment.is_approved === false ? 'default' : 'outline'} 
                     size="sm"
                     className="flex items-center gap-1"
-                    onClick={() => handleStatusChange(currentComment.id, 'pending')}
-                  >
-                    <span className="h-2 w-2 bg-yellow-500 rounded-full mr-1" /> Pending
-                  </Button>
-                  <Button 
-                    variant={currentComment.status === 'rejected' ? 'default' : 'outline'} 
-                    size="sm"
-                    className="flex items-center gap-1"
-                    onClick={() => handleStatusChange(currentComment.id, 'rejected')}
+                    onClick={() => handleStatusChange(currentComment.id, false)}
+                    disabled={isSubmitting}
                   >
                     <X className="h-4 w-4" /> Reject
                   </Button>
@@ -261,8 +296,19 @@ const CommentManagement = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDeleteComment}>Delete</Button>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isSubmitting}>Cancel</Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteComment}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : 'Delete'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

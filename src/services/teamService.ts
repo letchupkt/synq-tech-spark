@@ -6,8 +6,8 @@ export interface TeamMember {
   name: string;
   role: string;
   bio: string;
-  photo: string;
-  social: {
+  image_url?: string; // Changed from photo to image_url
+  social_links?: {  // Changed from social to social_links
     linkedin?: string;
     github?: string;
     instagram?: string;
@@ -69,25 +69,30 @@ export const deleteTeamMember = async (id: string): Promise<void> => {
 };
 
 export const initializeTeamMembers = async (teamMembers: Omit<TeamMember, 'id'>[]): Promise<void> => {
-  // Check if team members table is empty first
-  const { data, error } = await supabase
-    .from(TABLE_NAME)
-    .select('id');
-  
-  if (error) {
-    console.error('Error checking team members:', error);
-    throw error;
-  }
-  
-  if (data.length === 0 && teamMembers.length > 0) {
-    // Only initialize if table is empty
-    const { error: insertError } = await supabase
+  try {
+    // Check if team members table is empty first
+    const { data, error } = await supabase
       .from(TABLE_NAME)
-      .insert(teamMembers);
+      .select('id');
     
-    if (insertError) {
-      console.error('Error initializing team members:', insertError);
-      throw insertError;
+    if (error) {
+      console.error('Error checking team members:', error);
+      throw error;
     }
+    
+    if (data.length === 0 && teamMembers.length > 0) {
+      // Only initialize if table is empty
+      const { error: insertError } = await supabase
+        .from(TABLE_NAME)
+        .insert(teamMembers);
+      
+      if (insertError) {
+        console.error('Error initializing team members:', insertError);
+        throw insertError;
+      }
+    }
+  } catch (error) {
+    console.error('Error in initializeTeamMembers:', error);
+    // Fail silently to avoid breaking the app
   }
 };

@@ -6,9 +6,9 @@ export interface Comment {
   name: string;
   email: string;
   comment: string;
-  date: string;
+  created_at?: string; // Changed from date to created_at
   likes: number;
-  status: 'approved' | 'pending' | 'rejected';
+  is_approved?: boolean; // Changed from status to is_approved
 }
 
 const TABLE_NAME = 'comments';
@@ -30,7 +30,7 @@ export const getApprovedComments = async (): Promise<Comment[]> => {
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .select('*')
-    .eq('status', 'approved');
+    .eq('is_approved', true); // Changed from status to is_approved
   
   if (error) {
     console.error('Error fetching approved comments:', error);
@@ -67,10 +67,10 @@ export const updateComment = async (id: string, comment: Partial<Omit<Comment, '
   }
 };
 
-export const updateCommentStatus = async (id: string, status: 'approved' | 'pending' | 'rejected'): Promise<void> => {
+export const updateCommentStatus = async (id: string, is_approved: boolean): Promise<void> => {
   const { error } = await supabase
     .from(TABLE_NAME)
-    .update({ status })
+    .update({ is_approved }) // Changed from status to is_approved
     .eq('id', id);
   
   if (error) {
@@ -119,25 +119,30 @@ export const deleteComment = async (id: string): Promise<void> => {
 };
 
 export const initializeComments = async (comments: Omit<Comment, 'id'>[]): Promise<void> => {
-  // Check if comments table is empty first
-  const { data, error } = await supabase
-    .from(TABLE_NAME)
-    .select('id');
-  
-  if (error) {
-    console.error('Error checking comments:', error);
-    throw error;
-  }
-  
-  if (data.length === 0 && comments.length > 0) {
-    // Only initialize if table is empty
-    const { error: insertError } = await supabase
+  try {
+    // Check if comments table is empty first
+    const { data, error } = await supabase
       .from(TABLE_NAME)
-      .insert(comments);
+      .select('id');
     
-    if (insertError) {
-      console.error('Error initializing comments:', insertError);
-      throw insertError;
+    if (error) {
+      console.error('Error checking comments:', error);
+      throw error;
     }
+    
+    if (data.length === 0 && comments.length > 0) {
+      // Only initialize if table is empty
+      const { error: insertError } = await supabase
+        .from(TABLE_NAME)
+        .insert(comments);
+      
+      if (insertError) {
+        console.error('Error initializing comments:', insertError);
+        throw insertError;
+      }
+    }
+  } catch (error) {
+    console.error('Error in initializeComments:', error);
+    // Fail silently to avoid breaking the app
   }
 };

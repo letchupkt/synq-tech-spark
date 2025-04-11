@@ -46,8 +46,11 @@ const CommentSection = () => {
     const fetchComments = async () => {
       try {
         setIsLoading(true);
-        const fetchedComments = await getApprovedComments();
-        setComments(fetchedComments);
+        // Fetch all comments instead of just approved ones to avoid filtering issues
+        const fetchedComments = await getComments();
+        // Filter approved comments on the client side if needed
+        const approvedComments = fetchedComments.filter(comment => comment.is_approved === true);
+        setComments(approvedComments);
         
         // Load liked comments from localStorage
         const storedLikes = localStorage.getItem('likedComments');
@@ -79,9 +82,9 @@ const CommentSection = () => {
         name: data.name,
         email: data.email,
         comment: data.comment,
-        date: new Date().toLocaleDateString(),
+        created_at: new Date().toISOString(), // Use ISO string format for dates
         likes: 0,
-        status: 'pending' // New comments are pending by default
+        is_approved: false // New comments are pending by default
       };
       
       await addComment(newComment);
@@ -124,7 +127,7 @@ const CommentSection = () => {
       setLikedComments(newLikedComments);
       localStorage.setItem('likedComments', JSON.stringify([...newLikedComments]));
       
-      // Update in Firebase
+      // Update in Supabase
       await incrementLikes(commentId);
     } catch (error) {
       console.error('Error liking comment:', error);
@@ -133,6 +136,18 @@ const CommentSection = () => {
         description: 'Failed to like the comment. Please try again.',
         variant: 'destructive'
       });
+    }
+  };
+
+  // Add a helper function to format dates
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Unknown date';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString();
+    } catch (error) {
+      return dateString;
     }
   };
 
@@ -172,7 +187,7 @@ const CommentSection = () => {
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-semibold">{comment.name}</h4>
-                          <p className="text-sm text-muted-foreground">{comment.date}</p>
+                          <p className="text-sm text-muted-foreground">{formatDate(comment.created_at)}</p>
                         </div>
                         <Button 
                           variant="ghost" 
@@ -277,5 +292,8 @@ const CommentSection = () => {
     </section>
   );
 };
+
+// Import the getComments function to ensure we have access to ALL comments
+import { getComments } from '@/services/commentService';
 
 export default CommentSection;
