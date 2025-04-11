@@ -15,7 +15,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     // Add better error handling and retries to all requests
-    fetch: async (url, options = {}) => {
+    fetch: async (url, options: RequestInit = {}) => {
       try {
         return await fetch(url, {
           ...options,
