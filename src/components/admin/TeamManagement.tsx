@@ -40,8 +40,8 @@ const TeamManagement = () => {
     name: '',
     role: '',
     bio: '',
-    photo: '',
-    social: {
+    image_url: '',
+    social_links: {
       linkedin: '',
       github: '',
       instagram: '',
@@ -49,7 +49,7 @@ const TeamManagement = () => {
   });
   const { toast } = useToast();
 
-  // Load team members from Firestore
+  // Load team members from Supabase
   useEffect(() => {
     const fetchTeamMembers = async () => {
       try {
@@ -74,12 +74,12 @@ const TeamManagement = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
-    if (name.startsWith('social.')) {
+    if (name.startsWith('social_links.')) {
       const socialField = name.split('.')[1];
       setFormData({
         ...formData,
-        social: {
-          ...formData.social,
+        social_links: {
+          ...formData.social_links,
           [socialField]: value
         }
       });
@@ -96,8 +96,8 @@ const TeamManagement = () => {
       name: '',
       role: '',
       bio: '',
-      photo: '',
-      social: {
+      image_url: '',
+      social_links: {
         linkedin: '',
         github: '',
         instagram: '',
@@ -123,11 +123,11 @@ const TeamManagement = () => {
         name: formData.name || '',
         role: formData.role || '',
         bio: formData.bio || '',
-        photo: formData.photo || '/placeholder.svg',
-        social: {
-          linkedin: formData.social?.linkedin || '',
-          github: formData.social?.github || '',
-          instagram: formData.social?.instagram || '',
+        image_url: formData.image_url || '/placeholder.svg',
+        social_links: {
+          linkedin: formData.social_links?.linkedin || '',
+          github: formData.social_links?.github || '',
+          instagram: formData.social_links?.instagram || '',
         }
       };
 
@@ -173,11 +173,11 @@ const TeamManagement = () => {
         name: formData.name,
         role: formData.role,
         bio: formData.bio,
-        photo: formData.photo,
-        social: {
-          linkedin: formData.social?.linkedin || '',
-          github: formData.social?.github || '',
-          instagram: formData.social?.instagram || '',
+        image_url: formData.image_url,
+        social_links: {
+          linkedin: formData.social_links?.linkedin || '',
+          github: formData.social_links?.github || '',
+          instagram: formData.social_links?.instagram || '',
         }
       };
 
@@ -214,11 +214,11 @@ const TeamManagement = () => {
       name: member.name,
       role: member.role,
       bio: member.bio,
-      photo: member.photo,
-      social: {
-        linkedin: member.social?.linkedin || '',
-        github: member.social?.github || '',
-        instagram: member.social?.instagram || '',
+      image_url: member.image_url,
+      social_links: {
+        linkedin: member.social_links?.linkedin || '',
+        github: member.social_links?.github || '',
+        instagram: member.social_links?.instagram || '',
       }
     });
     setIsEditDialogOpen(true);
@@ -303,9 +303,9 @@ const TeamManagement = () => {
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
                       <div className="flex space-x-2">
-                        {member.social?.linkedin && <Linkedin size={16} />}
-                        {member.social?.github && <Github size={16} />}
-                        {member.social?.instagram && <Instagram size={16} />}
+                        {member.social_links?.linkedin && <Linkedin size={16} />}
+                        {member.social_links?.github && <Github size={16} />}
+                        {member.social_links?.instagram && <Instagram size={16} />}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -384,11 +384,11 @@ const TeamManagement = () => {
               />
             </div>
             <div>
-              <label htmlFor="photo" className="text-sm font-medium block mb-1">Photo URL</label>
+              <label htmlFor="image_url" className="text-sm font-medium block mb-1">Photo URL</label>
               <Input
-                id="photo"
-                name="photo"
-                value={formData.photo}
+                id="image_url"
+                name="image_url"
+                value={formData.image_url}
                 onChange={handleInputChange}
                 placeholder="/team-member.jpg"
               />
@@ -397,8 +397,8 @@ const TeamManagement = () => {
               <label htmlFor="linkedin" className="text-sm font-medium block mb-1">LinkedIn URL</label>
               <Input
                 id="linkedin"
-                name="social.linkedin"
-                value={formData.social?.linkedin}
+                name="social_links.linkedin"
+                value={formData.social_links?.linkedin}
                 onChange={handleInputChange}
                 placeholder="https://linkedin.com/in/username"
               />
@@ -407,8 +407,8 @@ const TeamManagement = () => {
               <label htmlFor="github" className="text-sm font-medium block mb-1">GitHub URL</label>
               <Input
                 id="github"
-                name="social.github"
-                value={formData.social?.github}
+                name="social_links.github"
+                value={formData.social_links?.github}
                 onChange={handleInputChange}
                 placeholder="https://github.com/username"
               />
@@ -417,8 +417,8 @@ const TeamManagement = () => {
               <label htmlFor="instagram" className="text-sm font-medium block mb-1">Instagram URL</label>
               <Input
                 id="instagram"
-                name="social.instagram"
-                value={formData.social?.instagram}
+                name="social_links.instagram"
+                value={formData.social_links?.instagram}
                 onChange={handleInputChange}
                 placeholder="https://instagram.com/username"
               />

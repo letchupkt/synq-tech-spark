@@ -19,9 +19,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       try {
         return await fetch(url, {
           ...options,
-          headers: {
-            ...options.headers,
-          },
+          headers: options.headers || {},
         });
       } catch (error) {
         console.error('Supabase fetch error:', error);

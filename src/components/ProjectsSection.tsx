@@ -20,8 +20,8 @@ const ProjectsSection = () => {
         setProjects(fetchedProjects);
         setFilteredProjects(fetchedProjects);
         
-        // Extract unique categories
-        const uniqueCategories = ['All', ...Array.from(new Set(fetchedProjects.map(project => project.category)))];
+        // Extract unique categories (using type instead of category)
+        const uniqueCategories = ['All', ...Array.from(new Set(fetchedProjects.map(project => project.type)))];
         setCategories(uniqueCategories);
       } catch (err) {
         console.error('Error fetching projects:', err);
@@ -42,7 +42,7 @@ const ProjectsSection = () => {
       return;
     }
     
-    const filtered = projects.filter(project => project.category === category);
+    const filtered = projects.filter(project => project.type === category);
     setFilteredProjects(filtered);
   };
 
@@ -88,7 +88,7 @@ const ProjectsSection = () => {
                 <div key={project.id} className="bg-card rounded-lg overflow-hidden border border-border card-hover">
                   <div className="h-48 bg-secondary/50 relative">
                     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/40">
-                      <span className="text-lg font-medium">{project.category}</span>
+                      <span className="text-lg font-medium">{project.type}</span>
                     </div>
                   </div>
                   <div className="p-6">
@@ -96,7 +96,7 @@ const ProjectsSection = () => {
                     <p className="text-muted-foreground mb-4">{project.description}</p>
                     
                     <div className="flex flex-wrap gap-2 mb-4">
-                      {project.technologies.map((tech, index) => (
+                      {project.tech_stack && project.tech_stack.map((tech, index) => (
                         <span 
                           key={index} 
                           className="px-2 py-1 bg-secondary/50 rounded-md text-xs"
@@ -107,22 +107,26 @@ const ProjectsSection = () => {
                     </div>
                     
                     <div className="flex space-x-3">
-                      <a 
-                        href={project.demoUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="inline-flex items-center text-sm text-primary hover:underline"
-                      >
-                        <ExternalLink className="mr-1 h-4 w-4" /> Demo
-                      </a>
-                      <a 
-                        href={project.githubUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="inline-flex items-center text-sm text-primary hover:underline"
-                      >
-                        <Github className="mr-1 h-4 w-4" /> Code
-                      </a>
+                      {project.demo_url && (
+                        <a 
+                          href={project.demo_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center text-sm text-primary hover:underline"
+                        >
+                          <ExternalLink className="mr-1 h-4 w-4" /> Demo
+                        </a>
+                      )}
+                      {project.github_url && (
+                        <a 
+                          href={project.github_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="inline-flex items-center text-sm text-primary hover:underline"
+                        >
+                          <Github className="mr-1 h-4 w-4" /> Code
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>

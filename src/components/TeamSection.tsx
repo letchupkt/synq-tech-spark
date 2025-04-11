@@ -61,9 +61,9 @@ const TeamSection = () => {
                   <p className="text-sm text-muted-foreground mb-4">{member.bio}</p>
                   
                   <div className="flex space-x-3">
-                    {member.social?.linkedin && (
+                    {member.social_links?.linkedin && (
                       <a 
-                        href={member.social.linkedin} 
+                        href={member.social_links.linkedin} 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="p-2 rounded-full bg-secondary hover:bg-primary transition-colors duration-300"
@@ -71,9 +71,9 @@ const TeamSection = () => {
                         <Linkedin size={16} />
                       </a>
                     )}
-                    {member.social?.github && (
+                    {member.social_links?.github && (
                       <a 
-                        href={member.social.github} 
+                        href={member.social_links.github} 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="p-2 rounded-full bg-secondary hover:bg-primary transition-colors duration-300"
@@ -81,9 +81,9 @@ const TeamSection = () => {
                         <Github size={16} />
                       </a>
                     )}
-                    {member.social?.instagram && (
+                    {member.social_links?.instagram && (
                       <a 
-                        href={member.social.instagram} 
+                        href={member.social_links.instagram} 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         className="p-2 rounded-full bg-secondary hover:bg-primary transition-colors duration-300"
