@@ -74,11 +74,11 @@ const CommentSection = () => {
     try {
       setIsSubmitting(true);
       
-      // The fix: Make sure all required fields are explicitly assigned here
+      // Ensure all required fields are explicitly assigned
       const newComment: Omit<CommentType, 'id'> = {
-        name: data.name,         // Explicitly assign name
-        email: data.email,       // Explicitly assign email
-        comment: data.comment,   // Explicitly assign comment
+        name: data.name,
+        email: data.email,
+        comment: data.comment,
         date: new Date().toLocaleDateString(),
         likes: 0,
         status: 'pending' // New comments are pending by default

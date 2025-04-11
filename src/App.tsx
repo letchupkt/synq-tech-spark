@@ -11,31 +11,42 @@ import AdminPanel from "./pages/AdminPanel";
 import { migrateLocalDataToSupabase } from "./utils/dataMigration";
 
 // Create a new QueryClient instance outside the component
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 const App = () => {
   useEffect(() => {
-    // Run data migration on app startup - only does something if collections are empty
-    migrateLocalDataToSupabase();
+    // Run data migration on app startup with a small delay to ensure everything is loaded
+    const timer = setTimeout(() => {
+      migrateLocalDataToSupabase().catch(error => {
+        console.error('Failed to migrate data:', error);
+      });
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/admin" element={<AdminPanel />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 };
 

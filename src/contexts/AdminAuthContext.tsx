@@ -23,6 +23,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Check for an active session on component mount
     const checkSession = async () => {
       try {
+        setIsLoading(true);
         const { data } = await supabase.auth.getSession();
         setIsAuthenticated(!!data.session);
       } catch (error) {
@@ -48,6 +49,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      setIsLoading(true);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -67,11 +69,14 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         variant: "destructive",
       });
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = async () => {
     try {
+      setIsLoading(true);
       await supabase.auth.signOut();
       toast({
         title: "Logged out",
@@ -84,6 +89,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         description: "Failed to log out. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
