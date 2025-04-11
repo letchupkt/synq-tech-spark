@@ -16,8 +16,12 @@ export const migrateLocalDataToSupabase = async () => {
           name: member.name,
           role: member.role,
           bio: member.bio,
-          photo: member.photo,
-          social: member.social || {}
+          image_url: member.photo || member.image_url || '/placeholder.svg',
+          social_links: member.social || member.social_links || {
+            linkedin: '',
+            github: '',
+            instagram: ''
+          }
         })));
         console.log('Team members migration completed');
       } else {
@@ -27,8 +31,12 @@ export const migrateLocalDataToSupabase = async () => {
           name: member.name,
           role: member.role,
           bio: member.bio,
-          photo: member.photo || '/placeholder.svg',
-          social: member.social || {}
+          image_url: member.photo || member.image_url || '/placeholder.svg',
+          social_links: member.social || member.social_links || {
+            linkedin: '',
+            github: '',
+            instagram: ''
+          }
         })));
         console.log('Default team members imported');
       }
@@ -43,12 +51,12 @@ export const migrateLocalDataToSupabase = async () => {
         const projects = JSON.parse(storedProjects);
         await initializeProjects(projects.map((project: any) => ({
           title: project.title,
-          category: project.category,
+          type: project.category || project.type || '',
           description: project.description,
-          image: project.image || '/placeholder.svg',
-          demoUrl: project.demoUrl || '#',
-          githubUrl: project.githubUrl || '#',
-          technologies: project.technologies || []
+          image_url: project.image || project.image_url || '/placeholder.svg',
+          demo_url: project.demoUrl || project.demo_url || '',
+          github_url: project.githubUrl || project.github_url || '',
+          tech_stack: project.technologies || project.tech_stack || []
         })));
         console.log('Projects migration completed');
       } else {
@@ -56,12 +64,12 @@ export const migrateLocalDataToSupabase = async () => {
         const projectData = await import('@/data/projects.json');
         await initializeProjects(projectData.default.map((project: any) => ({
           title: project.title,
-          category: project.category,
+          type: project.category || project.type || '',
           description: project.description,
-          image: project.image || '/placeholder.svg',
-          demoUrl: project.demoUrl || '#',
-          githubUrl: project.githubUrl || '#',
-          technologies: project.technologies || []
+          image_url: project.image || project.image_url || '/placeholder.svg',
+          demo_url: project.demoUrl || project.demo_url || '',
+          github_url: project.githubUrl || project.github_url || '',
+          tech_stack: project.technologies || project.tech_stack || []
         })));
         console.log('Default projects imported');
       }
@@ -78,9 +86,9 @@ export const migrateLocalDataToSupabase = async () => {
           name: comment.name,
           email: comment.email,
           comment: comment.comment,
-          date: comment.date,
+          created_at: comment.date || comment.created_at || new Date().toISOString(),
           likes: comment.likes || 0,
-          status: comment.status || 'approved'
+          is_approved: comment.status === 'approved' || comment.is_approved || false
         })));
         console.log('Comments migration completed');
       }
