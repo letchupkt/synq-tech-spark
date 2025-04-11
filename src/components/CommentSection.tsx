@@ -14,7 +14,8 @@ import {
   getApprovedComments, 
   addComment, 
   incrementLikes,
-  Comment as CommentType
+  Comment as CommentType,
+  getComments
 } from '@/services/commentService';
 
 const commentSchema = z.object({
@@ -46,11 +47,8 @@ const CommentSection = () => {
     const fetchComments = async () => {
       try {
         setIsLoading(true);
-        // Fetch all comments instead of just approved ones to avoid filtering issues
-        const fetchedComments = await getComments();
-        // Filter approved comments on the client side if needed
-        const approvedComments = fetchedComments.filter(comment => comment.is_approved === true);
-        setComments(approvedComments);
+        const fetchedComments = await getApprovedComments();
+        setComments(fetchedComments);
         
         // Load liked comments from localStorage
         const storedLikes = localStorage.getItem('likedComments');
@@ -77,15 +75,19 @@ const CommentSection = () => {
     try {
       setIsSubmitting(true);
       
-      // Ensure all required fields are explicitly assigned
+      console.log('Preparing to submit comment:', data);
+      
+      // Create new comment object with all required fields
       const newComment: Omit<CommentType, 'id'> = {
         name: data.name,
         email: data.email,
         comment: data.comment,
-        created_at: new Date().toISOString(), // Use ISO string format for dates
+        created_at: new Date().toISOString(),
         likes: 0,
         is_approved: false // New comments are pending by default
       };
+      
+      console.log('Submitting new comment:', newComment);
       
       await addComment(newComment);
       
@@ -292,8 +294,5 @@ const CommentSection = () => {
     </section>
   );
 };
-
-// Import the getComments function to ensure we have access to ALL comments
-import { getComments } from '@/services/commentService';
 
 export default CommentSection;

@@ -6,9 +6,9 @@ export interface Comment {
   name: string;
   email: string;
   comment: string;
-  created_at?: string; // Changed from date to created_at
+  created_at: string;
   likes: number;
-  is_approved?: boolean; // Changed from status to is_approved
+  is_approved: boolean;
 }
 
 const TABLE_NAME = 'comments';
@@ -30,7 +30,7 @@ export const getApprovedComments = async (): Promise<Comment[]> => {
   const { data, error } = await supabase
     .from(TABLE_NAME)
     .select('*')
-    .eq('is_approved', true); // Changed from status to is_approved
+    .eq('is_approved', true);
   
   if (error) {
     console.error('Error fetching approved comments:', error);
@@ -41,18 +41,27 @@ export const getApprovedComments = async (): Promise<Comment[]> => {
 };
 
 export const addComment = async (comment: Omit<Comment, 'id'>): Promise<string> => {
-  const { data, error } = await supabase
-    .from(TABLE_NAME)
-    .insert(comment)
-    .select('id')
-    .single();
+  // Log the comment to help with debugging
+  console.log('Submitting comment:', comment);
   
-  if (error) {
-    console.error('Error adding comment:', error);
+  try {
+    const { data, error } = await supabase
+      .from(TABLE_NAME)
+      .insert(comment)
+      .select('id')
+      .single();
+    
+    if (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
+    
+    console.log('Comment submitted successfully:', data);
+    return data.id;
+  } catch (error) {
+    console.error('Caught error when adding comment:', error);
     throw error;
   }
-  
-  return data.id;
 };
 
 export const updateComment = async (id: string, comment: Partial<Omit<Comment, 'id'>>): Promise<void> => {
@@ -70,7 +79,7 @@ export const updateComment = async (id: string, comment: Partial<Omit<Comment, '
 export const updateCommentStatus = async (id: string, is_approved: boolean): Promise<void> => {
   const { error } = await supabase
     .from(TABLE_NAME)
-    .update({ is_approved }) // Changed from status to is_approved
+    .update({ is_approved })
     .eq('id', id);
   
   if (error) {
