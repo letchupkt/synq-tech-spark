@@ -1,14 +1,5 @@
 
-import { db } from '@/config/firebase';
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  deleteDoc, 
-  setDoc 
-} from 'firebase/firestore';
+import { supabase } from '@/config/supabase';
 
 export interface TeamMember {
   id: string;
@@ -23,39 +14,80 @@ export interface TeamMember {
   };
 }
 
-const COLLECTION_NAME = 'teamMembers';
+const TABLE_NAME = 'team_members';
 
 export const getTeamMembers = async (): Promise<TeamMember[]> => {
-  const teamCollection = collection(db, COLLECTION_NAME);
-  const snapshot = await getDocs(teamCollection);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  })) as TeamMember[];
+  const { data, error } = await supabase
+    .from(TABLE_NAME)
+    .select('*');
+  
+  if (error) {
+    console.error('Error fetching team members:', error);
+    throw error;
+  }
+  
+  return data || [];
 };
 
 export const addTeamMember = async (teamMember: Omit<TeamMember, 'id'>): Promise<string> => {
-  const docRef = await addDoc(collection(db, COLLECTION_NAME), teamMember);
-  return docRef.id;
+  const { data, error } = await supabase
+    .from(TABLE_NAME)
+    .insert(teamMember)
+    .select('id')
+    .single();
+  
+  if (error) {
+    console.error('Error adding team member:', error);
+    throw error;
+  }
+  
+  return data.id;
 };
 
 export const updateTeamMember = async (id: string, teamMember: Partial<Omit<TeamMember, 'id'>>): Promise<void> => {
-  const docRef = doc(db, COLLECTION_NAME, id);
-  await updateDoc(docRef, teamMember);
+  const { error } = await supabase
+    .from(TABLE_NAME)
+    .update(teamMember)
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error updating team member:', error);
+    throw error;
+  }
 };
 
 export const deleteTeamMember = async (id: string): Promise<void> => {
-  const docRef = doc(db, COLLECTION_NAME, id);
-  await deleteDoc(docRef);
+  const { error } = await supabase
+    .from(TABLE_NAME)
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting team member:', error);
+    throw error;
+  }
 };
 
 export const initializeTeamMembers = async (teamMembers: Omit<TeamMember, 'id'>[]): Promise<void> => {
-  const teamCollection = collection(db, COLLECTION_NAME);
-  const snapshot = await getDocs(teamCollection);
+  // Check if team members table is empty first
+  const { data, error } = await supabase
+    .from(TABLE_NAME)
+    .select('id');
   
-  if (snapshot.empty && teamMembers.length > 0) {
-    // Only initialize if collection is empty
-    const promises = teamMembers.map(member => addDoc(collection(db, COLLECTION_NAME), member));
-    await Promise.all(promises);
+  if (error) {
+    console.error('Error checking team members:', error);
+    throw error;
+  }
+  
+  if (data.length === 0 && teamMembers.length > 0) {
+    // Only initialize if table is empty
+    const { error: insertError } = await supabase
+      .from(TABLE_NAME)
+      .insert(teamMembers);
+    
+    if (insertError) {
+      console.error('Error initializing team members:', insertError);
+      throw insertError;
+    }
   }
 };

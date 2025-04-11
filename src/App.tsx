@@ -8,7 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminPanel from "./pages/AdminPanel";
-import { migrateLocalDataToFirestore } from "./utils/dataMigration";
+import { migrateLocalDataToSupabase } from "./utils/dataMigration";
 
 // Create a new QueryClient instance outside the component
 const queryClient = new QueryClient();
@@ -16,7 +16,7 @@ const queryClient = new QueryClient();
 const App = () => {
   useEffect(() => {
     // Run data migration on app startup - only does something if collections are empty
-    migrateLocalDataToFirestore();
+    migrateLocalDataToSupabase();
   }, []);
 
   return (

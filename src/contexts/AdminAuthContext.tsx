@@ -2,13 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  signInWithEmailAndPassword, 
-  signOut,
-  onAuthStateChanged,
-  AuthError 
-} from 'firebase/auth';
-import { auth } from '@/config/firebase';
+import { supabase } from '@/config/supabase';
 
 interface AdminAuthContextType {
   isAuthenticated: boolean;
@@ -26,27 +20,50 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user);
+    // Check for an active session on component mount
+    const checkSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        setIsAuthenticated(!!data.session);
+      } catch (error) {
+        console.error('Error checking auth session:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
       setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    checkSession();
+
+    // Clean up subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Login successful",
         description: "Welcome to the admin panel",
       });
       return true;
-    } catch (error) {
-      const authError = error as AuthError;
+    } catch (error: any) {
       toast({
         title: "Login failed",
-        description: authError.message || "Invalid email or password",
+        description: error.message || "Invalid email or password",
         variant: "destructive",
       });
       return false;
@@ -55,13 +72,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      await supabase.auth.signOut();
       toast({
         title: "Logged out",
         description: "You have been logged out of the admin panel",
       });
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to log out. Please try again.",

@@ -3,7 +3,7 @@ import { initializeTeamMembers } from '@/services/teamService';
 import { initializeProjects } from '@/services/projectService';
 import { initializeComments } from '@/services/commentService';
 
-export const migrateLocalDataToFirestore = async () => {
+export const migrateLocalDataToSupabase = async () => {
   try {
     // Migrate team members
     const storedTeam = localStorage.getItem('teamMembers');
@@ -69,7 +69,7 @@ export const migrateLocalDataToFirestore = async () => {
       })));
     }
 
-    console.log('Data migration to Firestore completed successfully');
+    console.log('Data migration to Supabase completed successfully');
   } catch (error) {
     console.error('Error during data migration:', error);
   }

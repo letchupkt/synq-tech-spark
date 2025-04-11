@@ -1,16 +1,5 @@
 
-import { db } from '@/config/firebase';
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  deleteDoc,
-  query,
-  where,
-  increment
-} from 'firebase/firestore';
+import { supabase } from '@/config/supabase';
 
 export interface Comment {
   id: string;
@@ -22,61 +11,133 @@ export interface Comment {
   status: 'approved' | 'pending' | 'rejected';
 }
 
-const COLLECTION_NAME = 'comments';
+const TABLE_NAME = 'comments';
 
 export const getComments = async (): Promise<Comment[]> => {
-  const commentCollection = collection(db, COLLECTION_NAME);
-  const snapshot = await getDocs(commentCollection);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  })) as Comment[];
+  const { data, error } = await supabase
+    .from(TABLE_NAME)
+    .select('*');
+  
+  if (error) {
+    console.error('Error fetching comments:', error);
+    throw error;
+  }
+  
+  return data || [];
 };
 
 export const getApprovedComments = async (): Promise<Comment[]> => {
-  const commentCollection = collection(db, COLLECTION_NAME);
-  const q = query(commentCollection, where("status", "==", "approved"));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  })) as Comment[];
+  const { data, error } = await supabase
+    .from(TABLE_NAME)
+    .select('*')
+    .eq('status', 'approved');
+  
+  if (error) {
+    console.error('Error fetching approved comments:', error);
+    throw error;
+  }
+  
+  return data || [];
 };
 
 export const addComment = async (comment: Omit<Comment, 'id'>): Promise<string> => {
-  const docRef = await addDoc(collection(db, COLLECTION_NAME), comment);
-  return docRef.id;
+  const { data, error } = await supabase
+    .from(TABLE_NAME)
+    .insert(comment)
+    .select('id')
+    .single();
+  
+  if (error) {
+    console.error('Error adding comment:', error);
+    throw error;
+  }
+  
+  return data.id;
 };
 
 export const updateComment = async (id: string, comment: Partial<Omit<Comment, 'id'>>): Promise<void> => {
-  const docRef = doc(db, COLLECTION_NAME, id);
-  await updateDoc(docRef, comment);
+  const { error } = await supabase
+    .from(TABLE_NAME)
+    .update(comment)
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error updating comment:', error);
+    throw error;
+  }
 };
 
 export const updateCommentStatus = async (id: string, status: 'approved' | 'pending' | 'rejected'): Promise<void> => {
-  const docRef = doc(db, COLLECTION_NAME, id);
-  await updateDoc(docRef, { status });
+  const { error } = await supabase
+    .from(TABLE_NAME)
+    .update({ status })
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error updating comment status:', error);
+    throw error;
+  }
 };
 
 export const incrementLikes = async (id: string): Promise<void> => {
-  const docRef = doc(db, COLLECTION_NAME, id);
-  await updateDoc(docRef, { 
-    likes: increment(1) 
-  });
+  // First get current likes value
+  const { data, error: fetchError } = await supabase
+    .from(TABLE_NAME)
+    .select('likes')
+    .eq('id', id)
+    .single();
+  
+  if (fetchError) {
+    console.error('Error fetching comment likes:', fetchError);
+    throw fetchError;
+  }
+  
+  const currentLikes = data?.likes || 0;
+  
+  // Then update with incremented value
+  const { error: updateError } = await supabase
+    .from(TABLE_NAME)
+    .update({ likes: currentLikes + 1 })
+    .eq('id', id);
+  
+  if (updateError) {
+    console.error('Error incrementing likes:', updateError);
+    throw updateError;
+  }
 };
 
 export const deleteComment = async (id: string): Promise<void> => {
-  const docRef = doc(db, COLLECTION_NAME, id);
-  await deleteDoc(docRef);
+  const { error } = await supabase
+    .from(TABLE_NAME)
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    console.error('Error deleting comment:', error);
+    throw error;
+  }
 };
 
 export const initializeComments = async (comments: Omit<Comment, 'id'>[]): Promise<void> => {
-  const commentCollection = collection(db, COLLECTION_NAME);
-  const snapshot = await getDocs(commentCollection);
+  // Check if comments table is empty first
+  const { data, error } = await supabase
+    .from(TABLE_NAME)
+    .select('id');
   
-  if (snapshot.empty && comments.length > 0) {
-    // Only initialize if collection is empty
-    const promises = comments.map(comment => addDoc(collection(db, COLLECTION_NAME), comment));
-    await Promise.all(promises);
+  if (error) {
+    console.error('Error checking comments:', error);
+    throw error;
+  }
+  
+  if (data.length === 0 && comments.length > 0) {
+    // Only initialize if table is empty
+    const { error: insertError } = await supabase
+      .from(TABLE_NAME)
+      .insert(comments);
+    
+    if (insertError) {
+      console.error('Error initializing comments:', insertError);
+      throw insertError;
+    }
   }
 };
